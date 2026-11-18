@@ -1,0 +1,14 @@
+/vendor/
+/build/
+composer.lock
+.phpunit.result.cache
+.phpunit.cache/
+.php-cs-fixer.cache
+.env
+.env.*
+.idea/
+.vscode/
+.DS_Store
+
+# The report of the SDK build. It is not part of the repository.
+/REPORT-sdk.md
