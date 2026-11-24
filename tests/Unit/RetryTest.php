@@ -92,10 +92,40 @@ it('does not wait when Retry-After is longer than the limit', function () {
         ->and($delays)->toBe([]);
 });
 
-it('retries a create after a connection error before the request was sent', function () {
+it('retries a create after a connection error before the send', function (string $message) {
+    $history = [];
+    $error = new ConnectException($message, new Request('POST', 'https://feedback.test'));
+
+    expect(pilgrim([$error, json(postPayload(), 201)], $history, noSleep(2))->posts()->create('A', 'B')->id)->toBe(1)
+        ->and($history)->toHaveCount(2);
+})->with([
+    'dns' => ['cURL error 6: Could not resolve host: feedback.test'],
+    'refused' => ['cURL error 7: Failed to connect to feedback.test port 443: Connection refused'],
+    'connect timeout' => ['cURL error 28: Connection timed out after 10001 milliseconds'],
+]);
+
+it('retries signInUrl() after a refused connection', function () {
     $history = [];
 
-    expect(pilgrim([connectionRefused(), json(postPayload(), 201)], $history, noSleep(2))->posts()->create('A', 'B')->id)->toBe(1)
+    expect(pilgrim([connectionRefused(), json(['auth_url' => 'https://a.test/x'])], $history, noSleep(2))->signInUrl('jane@example.com'))->toBe('https://a.test/x')
+        ->and($history)->toHaveCount(2);
+});
+
+it('does not retry a create after a reset after the send', function () {
+    $history = [];
+    $reset = new ConnectException('cURL error 56: Recv failure: Connection reset by peer', new Request('POST', 'https://feedback.test'));
+
+    $client = pilgrim([$reset, json(postPayload(), 201)], $history, noSleep(2));
+
+    expect(fn () => $client->posts()->create('A', 'B'))
+        ->toThrow(ConnectionException::class)
+        ->and($history)->toHaveCount(1);
+});
+
+it('retries a GET after a refused connection', function () {
+    $history = [];
+
+    expect(pilgrim([connectionRefused(), json(postPayload())], $history, noSleep(2))->posts()->find(1)->id)->toBe(1)
         ->and($history)->toHaveCount(2);
 });
 

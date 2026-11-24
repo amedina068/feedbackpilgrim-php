@@ -19,9 +19,10 @@ use SensitiveParameter;
  * Sends requests to the public API of one instance, with the token and the
  * retry policy.
  *
- * The SDK sends a request again after a 429, a 5xx or a connection error.
- * It sends a request that is not idempotent again only after a 429, or after
- * a connection error that occurred before the instance received the request.
+ * The SDK sends each request again after a 429 or a connection error before
+ * the send (a DNS failure, a refused connection or a connect timeout), because
+ * the instance did not do the request. It sends an idempotent request again
+ * after a 5xx, another connection error or a timeout.
  *
  * @internal
  */
@@ -86,7 +87,7 @@ final readonly class Transport
             } catch (ClientExceptionInterface $exception) {
                 $error = ConnectionException::from($exception);
 
-                if ($this->retry->allows($attempts) && ($idempotent || ! $error->requestSent)) {
+                if ($this->retry->allows($attempts) && ($idempotent || $error->beforeSend)) {
                     $this->retry->sleep($this->retry->delay($attempts));
 
                     continue;

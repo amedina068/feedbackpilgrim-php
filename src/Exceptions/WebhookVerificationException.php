@@ -26,10 +26,10 @@ final class WebhookVerificationException extends FeedbackPilgrimException
         );
     }
 
-    public static function timestampOutsideTolerance(int $tolerance): self
+    public static function invalidTimestamp(int $tolerance): self
     {
         return new self(
-            "The webhook timestamp is more than {$tolerance} seconds before or after the current time.",
+            "The webhook timestamp is missing, is not a Unix time, or is more than {$tolerance} seconds before or after the current time.",
             VerificationFailure::Timestamp,
         );
     }

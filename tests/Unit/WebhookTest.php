@@ -57,6 +57,41 @@ it('matches each shared signature vector', function (array $case) {
         ->and($event->timestamp)->toBe($now);
 })->with(fn () => webhookVectors());
 
+it('matches each shared verify vector', function (array $case) {
+    $shared = vectors('webhook-verify-vectors');
+
+    try {
+        $event = Webhook::verify($case['body'], $case['headers'], $shared['secret'], now: $case['now']);
+    } catch (WebhookVerificationException $exception) {
+        expect($case['expect']['valid'])->toBeFalse()
+            ->and($exception->reason->value)->toBe($case['expect']['reason']);
+
+        return;
+    }
+
+    expect($case['expect']['valid'])->toBeTrue()
+        ->and($event->type)->toBe($case['expect']['type'])
+        ->and($event->timestamp)->toBe($case['expect']['timestamp'])
+        ->and($event->deliveryId)->toBe($case['expect']['delivery_id'])
+        ->and($event->data['id'])->toBe($case['expect']['data_id'])
+        ->and($event->payload)->toBe(json_decode($case['body'], true));
+})->with(fn () => array_map(
+    fn (array $case) => [$case],
+    array_column(vectors('webhook-verify-vectors')['cases'], null, 'name'),
+));
+
+it('accepts an empty JSON object as the body', function () {
+    $timestamp = '1763456789';
+
+    $event = Webhook::verify('{}', [
+        'X-FeedbackPilgrim-Signature-V2' => hash_hmac('sha256', $timestamp.'.{}', webhookSecret()),
+        'X-FeedbackPilgrim-Timestamp' => $timestamp,
+    ], webhookSecret(), now: (int) $timestamp);
+
+    expect($event->payload)->toBe([])
+        ->and($event->deliveryId)->toBeNull();
+});
+
 it('gives the event, the data and the delivery ID', function () {
     $case = webhookVectors()['status change with a slash and accents in the text'][0];
 
@@ -122,7 +157,7 @@ it('uses the clock when no time is given', function () {
         ->and(Webhook::isValid($body, $signature, '1763456789', webhookSecret()))->toBeFalse();
 });
 
-it('gives the reason of a signature failure', function (?string $signature, ?string $timestamp) {
+it('gives the reason of a failure', function (?string $signature, ?string $timestamp, VerificationFailure $reason) {
     $case = webhookVectors()['post created without a stage'][0];
     $headers = array_filter([
         'X-FeedbackPilgrim-Signature-V2' => $signature,
@@ -132,16 +167,16 @@ it('gives the reason of a signature failure', function (?string $signature, ?str
     try {
         Webhook::verify($case['body'], $headers, webhookSecret(), now: (int) $case['timestamp']);
     } catch (WebhookVerificationException $exception) {
-        expect($exception->reason)->toBe(VerificationFailure::Signature);
+        expect($exception->reason)->toBe($reason);
 
         return;
     }
 
     test()->fail('The delivery was accepted.');
 })->with([
-    'no signature' => [null, '1763456789'],
-    'no timestamp' => ['2d4194d96e8fbc9affc0ff86526ba3a073d622702e09b68608bbf1fc073688e6', null],
-    'wrong signature' => [str_repeat('0', 64), '1763456789'],
+    'no signature' => [null, '1763456789', VerificationFailure::Signature],
+    'no timestamp' => ['2d4194d96e8fbc9affc0ff86526ba3a073d622702e09b68608bbf1fc073688e6', null, VerificationFailure::Timestamp],
+    'wrong signature' => [str_repeat('0', 64), '1763456789', VerificationFailure::Signature],
 ]);
 
 it('does not accept the deprecated body-only signature', function () {

@@ -4,6 +4,7 @@
     "type": "library",
     "keywords": ["feedbackpilgrim", "feedback", "roadmap", "changelog", "testimonials", "laravel", "sdk"],
     "homepage": "https://github.com/amedina068/feedbackpilgrim-php",
+    "license": "MIT",
     "require": {
         "php": "^8.2",
         "php-http/discovery": "^1.19",

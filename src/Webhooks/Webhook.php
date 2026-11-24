@@ -55,6 +55,9 @@ final class Webhook
     /**
      * Verify a delivery and return its event, with the delivery ID.
      *
+     * The delivery ID is null when the delivery header is missing. Older
+     * instances do not send it.
+     *
      * @param  string  $payload  The raw request body.
      * @param  array<string, string|list<string|null>|null>  $headers  The request headers. The names ignore case.
      *
@@ -72,17 +75,18 @@ final class Webhook
 
         $failure = self::failure($payload, self::header($headers, self::SIGNATURE_HEADER), $timestamp, $secret, $tolerance, $now);
 
+        if ($failure === VerificationFailure::Timestamp) {
+            throw WebhookVerificationException::invalidTimestamp($tolerance);
+        }
+
         if ($failure === VerificationFailure::Signature) {
             throw WebhookVerificationException::invalidSignature();
         }
 
-        if ($failure === VerificationFailure::Timestamp) {
-            throw WebhookVerificationException::timestampOutsideTolerance($tolerance);
-        }
-
         $body = json_decode($payload, true);
 
-        if (! is_array($body) || array_is_list($body)) {
+        // "{}" and "[]" both decode to an empty array, so ask for an object too.
+        if (! is_array($body) || ! json_decode($payload) instanceof \stdClass) {
             throw WebhookVerificationException::invalidPayload();
         }
 
@@ -90,7 +94,6 @@ final class Webhook
             $body,
             (int) $timestamp,
             self::header($headers, self::DELIVERY_HEADER),
-            self::header($headers, self::EVENT_HEADER),
         );
     }
 
@@ -109,15 +112,16 @@ final class Webhook
         $signature = strtolower(trim($signature ?? ''));
         $timestamp = trim($timestamp ?? '');
 
-        if ($signature === '' || $timestamp === '') {
+        if (! ctype_digit($timestamp)) {
+            return VerificationFailure::Timestamp;
+        }
+
+        // Check the signature before the clock, so that an unsigned request learns nothing about the clock.
+        if ($signature === '' || ! hash_equals(hash_hmac('sha256', $timestamp.'.'.$payload, $secret), $signature)) {
             return VerificationFailure::Signature;
         }
 
-        if (! hash_equals(hash_hmac('sha256', $timestamp.'.'.$payload, $secret), $signature)) {
-            return VerificationFailure::Signature;
-        }
-
-        if (! ctype_digit($timestamp) || abs(($now ?? time()) - (int) $timestamp) > $tolerance) {
+        if (abs(($now ?? time()) - (int) $timestamp) > $tolerance) {
             return VerificationFailure::Timestamp;
         }
 
@@ -135,6 +139,8 @@ final class Webhook
             $value = $value[0] ?? null;
         }
 
-        return is_string($value) ? trim($value) : null;
+        $value = is_string($value) ? trim($value) : '';
+
+        return $value === '' ? null : $value;
     }
 }

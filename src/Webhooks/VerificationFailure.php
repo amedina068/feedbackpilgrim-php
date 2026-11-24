@@ -10,13 +10,14 @@ namespace FeedbackPilgrim\Webhooks;
 enum VerificationFailure: string
 {
     /**
-     * The signature or the timestamp header is missing, or the signature does
-     * not match the timestamp and the body.
+     * The signature header is missing, or the signature does not match the
+     * timestamp and the body.
      */
     case Signature = 'signature';
 
     /**
-     * The timestamp is more than the tolerance before or after the current time.
+     * The timestamp header is missing or is not digits, or the timestamp is
+     * more than the tolerance before or after the current time.
      */
     case Timestamp = 'timestamp';
 

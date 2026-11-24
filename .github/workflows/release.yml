@@ -4,10 +4,9 @@
 # It does not publish the package to Packagist.
 #
 # To publish to Packagist later:
-#   1. Choose a license and add it to the package.
-#   2. Add the repository to Packagist.
-#   3. Add the Packagist API token as the repository secret PACKAGIST_TOKEN.
-#   4. Remove the comment marks of the "Notify Packagist" step below.
+#   1. Add the repository to Packagist.
+#   2. Add the Packagist API token as the repository secret PACKAGIST_TOKEN.
+#   3. Remove the comment marks of the "Notify Packagist" step below.
 
 name: Release
 
@@ -47,8 +46,7 @@ jobs:
 
       - name: Run the checks
         run: |
-          # Not --strict: the package has no license field yet, and --strict fails on that warning.
-          composer validate --no-check-lock
+          composer validate --strict --no-check-lock
           vendor/bin/pint --test
           vendor/bin/phpstan analyse --memory-limit=1G --no-progress
           vendor/bin/pest

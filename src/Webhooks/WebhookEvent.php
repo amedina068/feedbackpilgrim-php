@@ -37,9 +37,10 @@ final readonly class WebhookEvent
     /**
      * @param  array<array-key, mixed>  $payload
      */
-    public static function fromDelivery(array $payload, int $timestamp, ?string $deliveryId = null, ?string $eventHeader = null): self
+    public static function fromDelivery(array $payload, int $timestamp, ?string $deliveryId = null): self
     {
-        $type = $payload['event'] ?? $eventHeader;
+        // Read the type from the signed body only. The event header is not signed.
+        $type = $payload['event'] ?? null;
 
         return new self(
             type: is_string($type) ? $type : '',

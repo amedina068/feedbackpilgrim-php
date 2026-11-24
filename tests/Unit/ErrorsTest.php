@@ -99,14 +99,15 @@ it('throws a connection exception when the instance cannot be reached', function
         ->tags()->list();
 })->throws(ConnectionException::class, 'Failed to connect');
 
-it('knows when a connection error happened before the request was sent', function (string $message, bool $sent) {
+it('knows when a connection error occurred before the send', function (string $message, bool $beforeSend) {
     $exception = ConnectionException::from(new ConnectException($message, new Request('GET', 'https://feedback.test')));
 
-    expect($exception->requestSent)->toBe($sent);
+    expect($exception->beforeSend)->toBe($beforeSend);
 })->with([
-    'refused' => ['cURL error 7: Failed to connect to feedback.test port 443: Connection refused', false],
-    'dns' => ['cURL error 6: Could not resolve host: feedback.test', false],
-    'connect timeout' => ['cURL error 28: Connection timed out after 10001 milliseconds', false],
-    'read timeout' => ['cURL error 28: Operation timed out after 30001 milliseconds with 0 bytes received', true],
-    'reset' => ['cURL error 56: Recv failure: Connection reset by peer', true],
+    'refused' => ['cURL error 7: Failed to connect to feedback.test port 443: Connection refused', true],
+    'dns' => ['cURL error 6: Could not resolve host: feedback.test', true],
+    'proxy dns' => ['cURL error 5: Could not resolve proxy: proxy.test', true],
+    'connect timeout' => ['cURL error 28: Connection timed out after 10001 milliseconds', true],
+    'read timeout' => ['cURL error 28: Operation timed out after 30001 milliseconds with 0 bytes received', false],
+    'reset' => ['cURL error 56: Recv failure: Connection reset by peer', false],
 ]);

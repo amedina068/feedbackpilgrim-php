@@ -15,11 +15,9 @@ The SDK uses PSR-18 and PSR-17. It works with any PSR-18 HTTP client. If Guzzle 
 
 ## Install
 
-```bash
-composer require feedbackpilgrim/feedbackpilgrim-php guzzlehttp/guzzle
-```
+The package is not on Packagist. Install it from GitHub.
 
-The package is not on Packagist yet. Until then, add the GitHub repository to the `repositories` key of your `composer.json`:
+1. Add the GitHub repository to the `repositories` key of your `composer.json`:
 
 ```json
 {
@@ -28,6 +26,14 @@ The package is not on Packagist yet. Until then, add the GitHub repository to th
     ]
 }
 ```
+
+2. Require the `main` branch:
+
+```bash
+composer require feedbackpilgrim/feedbackpilgrim-php:dev-main guzzlehttp/guzzle
+```
+
+The repository is private, so you need read access and a GitHub token for Composer. The package has no tag yet, so the `:dev-main` constraint is necessary.
 
 ## Quick start
 
@@ -204,7 +210,8 @@ $url = $pilgrim->signInUrl('jane@example.com', name: 'Jane Doe', customFields: [
 
 - The link is valid for 24 hours. Send it only to that contact.
 - For a contact that exists, the custom fields of this call replace the custom fields of the contact.
-- The method returns `null` when the instance gets no email.
+- The method returns `null` when the instance sends no link. For example, an empty email gets `[]` and no link. The method does not throw an exception for it.
+- The SDK does not send this request again after a 5xx or a timeout, because each call makes a new link.
 
 ## Identity hash
 
@@ -254,8 +261,16 @@ if ($event->is(WebhookEvent::POST_COMPLETED)) {
 ```
 
 - Give the raw request body, byte for byte. Do not decode the JSON and encode it again. The instance escapes `/` and each character that is not ASCII, so a new encoding gives other bytes.
-- The SDK verifies the `X-FeedbackPilgrim-Signature-V2` header: the HMAC-SHA256 hex digest of `<timestamp>.<raw body>`. It compares the digests in constant time.
+- The SDK verifies the `X-FeedbackPilgrim-Signature-V2` header: the HMAC-SHA256 hex digest of `<timestamp>.<raw body>`. It makes the header lowercase, then compares the digests in constant time. An uppercase hex signature is valid.
 - The SDK rejects a timestamp that is more than 300 seconds from the current time. Change the limit with `tolerance`.
+- The event has `$type`, `$data`, `$payload` (the decoded body), `$timestamp` (an integer) and `$deliveryId`.
+- If the `X-FeedbackPilgrim-Delivery` header is missing or empty, the verification passes and `$deliveryId` is `null`. Older instances do not send this header.
+- `$exception->reason` is a `VerificationFailure`. The SDK does the checks in this order, and the first check that fails gives the reason:
+  1. `VerificationFailure::Timestamp`: the timestamp header is missing or is not digits.
+  2. `VerificationFailure::Signature`: the signature header is missing or does not match.
+  3. `VerificationFailure::Timestamp`: the timestamp is outside the tolerance.
+  4. `VerificationFailure::Payload`: the body is not a JSON object.
+- The enum values are `signature`, `timestamp` and `payload`, the same names as in the JS, Python and Ruby SDKs.
 - The events are `post.created`, `post.status_changed` and `post.completed`. `$event->data` has `id`, `title`, `content`, `status`, `board_id`, `contact_id` and `stage`.
 - Each retry of a delivery sends the same `$event->deliveryId`. Store the IDs that you processed, and ignore a repeated delivery. The SDK does not store IDs.
 - The SDK does not verify the deprecated `X-FeedbackPilgrim-Signature` header.
@@ -301,13 +316,17 @@ try {
 
 ## Retries
 
-The SDK sends a request again after a 429, a 5xx or a connection error.
+The SDK sends a request again up to 2 times by default.
 
 - The delay grows exponentially, with jitter: 250 to 500 ms, then 500 to 1000 ms, up to 8 seconds.
-- After a 429, the SDK waits for the `Retry-After` time. If that time is more than 60 seconds, the SDK throws the `RateLimitException`.
-- After a 5xx or a timeout, the SDK does not send a create or a sign-in request again, because the instance can have received it. It sends it again after a 429, or after a connection error before the instance received the request.
-- `GET`, `PATCH`, `DELETE` and the contact `upsert()` are idempotent. The SDK sends them again after each retryable error.
+- After a 429, the SDK sends each request again, because the instance did not do the request.
+- After a connection error before the send, the SDK sends each request again, also a create. The instance did not get the request. These errors are a DNS failure (cURL error 5 or 6), a connection that did not open (cURL error 7) and a connect timeout (cURL error 28, "Connection timed out"). `ConnectionException::$beforeSend` is true for them.
+- After a 5xx, a read timeout, a reset or another connection error, the SDK sends only an idempotent request again.
+- If a retried response has `Retry-After` (seconds or an HTTP date), the SDK waits that time. If that time is more than 60 seconds, the SDK throws the exception.
+- These calls are idempotent: each `list()`, `all()` and `find()`, each `update()`, `testimonials()->approve()`, `contacts()->upsert()` and `tags()->delete()`.
+- These calls are not idempotent: `signInUrl()` and each `create()`.
 - The limit is 120 requests each minute for each user. All the tokens of one user share it.
+- The JS, Python and Ruby SDKs use the same retry rules.
 
 ```php
 use FeedbackPilgrim\FeedbackPilgrim;
@@ -428,3 +447,7 @@ FEEDBACKPILGRIM_TEST_URL=https://feedback.example.com FEEDBACKPILGRIM_TEST_TOKEN
 ## Security
 
 To report a security problem, read [SECURITY.md](SECURITY.md).
+
+## License
+
+MIT. Read [LICENSE](LICENSE). The Feedback Pilgrim app has its own license.

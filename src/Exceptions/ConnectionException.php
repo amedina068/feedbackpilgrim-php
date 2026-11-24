@@ -10,30 +10,30 @@ use Psr\Http\Client\NetworkExceptionInterface;
 /**
  * The SDK did not get a response from the instance.
  *
- * `$requestSent` is false only when the SDK is sure that the instance did not
- * receive the request, for example when DNS or the TCP connection failed.
+ * `$beforeSend` is true for a DNS failure, a refused connection or a connect
+ * timeout. Then the instance did not get the request, and a retry is safe.
  */
 final class ConnectionException extends FeedbackPilgrimException
 {
     /**
-     * Error texts that show that the request did not leave the client.
-     * cURL error 5 and 6 are DNS failures. cURL error 7 is a refused connection.
+     * cURL error 5 and 6 are DNS failures. cURL error 7 is a connection that
+     * did not open. cURL error 28 with "Connection timed out" is a connect timeout.
      */
-    private const NOT_SENT_PATTERN = '/cURL error (5|6|7)\b|could ?n[o\']t resolve|connection refused|failed to connect|connection timed out/i';
+    private const BEFORE_SEND_PATTERN = '/cURL error (5|6|7):|cURL error 28: Connection timed out/i';
 
-    public function __construct(string $message, public readonly bool $requestSent, ?\Throwable $previous = null)
+    public function __construct(string $message, public readonly bool $beforeSend = false, ?\Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);
     }
 
     public static function from(ClientExceptionInterface $exception): self
     {
-        $requestSent = ! ($exception instanceof NetworkExceptionInterface
-            && preg_match(self::NOT_SENT_PATTERN, $exception->getMessage()) === 1);
+        $beforeSend = $exception instanceof NetworkExceptionInterface
+            && preg_match(self::BEFORE_SEND_PATTERN, $exception->getMessage()) === 1;
 
         return new self(
             'Could not connect to the Feedback Pilgrim instance: '.$exception->getMessage(),
-            $requestSent,
+            $beforeSend,
             $exception,
         );
     }
