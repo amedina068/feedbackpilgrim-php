@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/amedina068/feedbackpilgrim-php/actions/workflows/ci.yml/badge.svg)](https://github.com/amedina068/feedbackpilgrim-php/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/amedina068/feedbackpilgrim-php/badge)](https://scorecard.dev/viewer/?uri=github.com/amedina068/feedbackpilgrim-php)
 
 The PHP client and the Laravel integration for a self-hosted Feedback Pilgrim instance.
 
