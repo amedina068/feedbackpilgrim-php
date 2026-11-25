@@ -12,3 +12,7 @@ composer.lock
 
 # The report of the SDK build. It is not part of the repository.
 /REPORT-sdk.md
+
+# Internal notes of the maintainer
+BRIEF.md
+REPORT-*.md
