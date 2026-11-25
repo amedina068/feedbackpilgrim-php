@@ -1,5 +1,8 @@
 # Feedback Pilgrim PHP SDK
 
+[![CI](https://github.com/amedina068/feedbackpilgrim-php/actions/workflows/ci.yml/badge.svg)](https://github.com/amedina068/feedbackpilgrim-php/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 The PHP client and the Laravel integration for a self-hosted Feedback Pilgrim instance.
 
 The SDK reads and writes the posts, release notes, contacts, testimonials and tags of one client. It also makes the identity hash of the widget and verifies signed webhooks.
@@ -33,7 +36,7 @@ The package is not on Packagist. Install it from GitHub.
 composer require feedbackpilgrim/feedbackpilgrim-php:dev-main guzzlehttp/guzzle
 ```
 
-The repository is private, so you need read access and a GitHub token for Composer. The package has no tag yet, so the `:dev-main` constraint is necessary.
+The package has no tag yet, so the `:dev-main` constraint is necessary.
 
 ## Quick start
 
@@ -444,10 +447,22 @@ The integration tests run only when `FEEDBACKPILGRIM_TEST_URL` and `FEEDBACKPILG
 FEEDBACKPILGRIM_TEST_URL=https://feedback.example.com FEEDBACKPILGRIM_TEST_TOKEN=... composer test:integration
 ```
 
-## Security
+## Related projects
 
-To report a security problem, read [SECURITY.md](SECURITY.md).
+- [Feedback Pilgrim](https://github.com/amedina068/feedbackpilgrim): the self-hosted app that this SDK calls. It uses the AGPL-3.0.
+- [Documentation](https://feedbackpilgrim.com/docs): the guides for the app and the SDKs. The source is in [feedbackpilgrim-docs](https://github.com/amedina068/feedbackpilgrim-docs).
+- [SDK overview](https://feedbackpilgrim.com/docs/sdks/overview): the install steps and the features of each SDK.
+- SDKs for other languages: [TypeScript](https://github.com/amedina068/feedbackpilgrim-js), [Python](https://github.com/amedina068/feedbackpilgrim-python), [Ruby](https://github.com/amedina068/feedbackpilgrim-ruby).
+
+## Community
+
+- [CONTRIBUTING.md](CONTRIBUTING.md): how to set up the code and open a pull request.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): the rules for issues, pull requests, and reviews.
+- [SECURITY.md](SECURITY.md): how to report a security problem in private.
+- [CHANGELOG.md](CHANGELOG.md): the changes in each version.
+
+Report a problem with the SDK in the issues of this repository. Report a problem with the app in the [Feedback Pilgrim issues](https://github.com/amedina068/feedbackpilgrim/issues).
 
 ## License
 
-MIT. Read [LICENSE](LICENSE). The Feedback Pilgrim app has its own license.
+This SDK is available under the [MIT License](LICENSE). You can use it in closed source code. The Feedback Pilgrim app uses the AGPL-3.0. That license does not cover this SDK.
