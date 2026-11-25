@@ -3,7 +3,7 @@
 [![CI](https://github.com/amedina068/feedbackpilgrim-php/actions/workflows/ci.yml/badge.svg)](https://github.com/amedina068/feedbackpilgrim-php/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-The PHP client and the Laravel integration for a self-hosted Feedback Pilgrim instance.
+The PHP client and the Laravel integration for Feedback Pilgrim Cloud and for a self-hosted Feedback Pilgrim instance.
 
 The SDK reads and writes the posts, release notes, contacts, testimonials and tags of one client. It also makes the identity hash of the widget and verifies signed webhooks.
 
@@ -40,11 +40,15 @@ The package has no tag yet, so the `:dev-main` constraint is necessary.
 
 ## Quick start
 
+No instance yet? Start a free 14-day trial of [Feedback Pilgrim Cloud](https://app.feedbackpilgrim.com/register). No credit card is necessary.
+
+On Feedback Pilgrim Cloud, the URL is `https://app.feedbackpilgrim.com`:
+
 ```php
 use FeedbackPilgrim\FeedbackPilgrim;
 
 $pilgrim = new FeedbackPilgrim(
-    url: 'https://feedback.example.com',
+    url: 'https://app.feedbackpilgrim.com',
     token: getenv('FEEDBACKPILGRIM_TOKEN'),
 );
 
@@ -53,9 +57,18 @@ $post = $pilgrim->posts()->create('Add dark mode', 'Please add a dark theme.');
 $pilgrim->posts()->update($post->id, status: 'in_progress');
 ```
 
+On a self-hosted instance, the URL is the `APP_URL` of your instance:
+
+```php
+$pilgrim = new FeedbackPilgrim(
+    url: 'https://feedback.example.com',
+    token: getenv('FEEDBACKPILGRIM_TOKEN'),
+);
+```
+
 ## Configuration
 
-Each user runs an own instance, so the instance URL is required.
+The instance URL is required. On Feedback Pilgrim Cloud, it is `https://app.feedbackpilgrim.com`.
 
 ```php
 use FeedbackPilgrim\FeedbackPilgrim;
@@ -72,7 +85,7 @@ $pilgrim = new FeedbackPilgrim(
 
 | Setting | Default | Description |
 |---|---|---|
-| `url` | (required) | The URL of your instance, with or without a trailing slash. |
+| `url` | (required) | The URL of your instance, with or without a trailing slash. On Cloud, use `https://app.feedbackpilgrim.com`. |
 | `token` | `null` | A Laravel Sanctum token, `<id>\|<random>`. It belongs to one client and does not expire. |
 | `identitySecret` | `null` | The identity secret of the client. |
 | `timeout` | `30.0` | The SDK uses it when it creates a Guzzle client. If you give your own client, set its timeout yourself. |
@@ -377,7 +390,8 @@ The package registers the service provider and the `FeedbackPilgrim` facade auto
 1. Add the settings to your `.env` file:
 
 ```dotenv
-FEEDBACKPILGRIM_URL=https://feedback.example.com
+# Feedback Pilgrim Cloud. On a self-hosted instance, use your APP_URL.
+FEEDBACKPILGRIM_URL=https://app.feedbackpilgrim.com
 FEEDBACKPILGRIM_TOKEN=
 FEEDBACKPILGRIM_IDENTITY_SECRET=
 FEEDBACKPILGRIM_WEBHOOK_SECRET=
@@ -449,7 +463,7 @@ FEEDBACKPILGRIM_TEST_URL=https://feedback.example.com FEEDBACKPILGRIM_TEST_TOKEN
 
 ## Related projects
 
-- [Feedback Pilgrim](https://github.com/amedina068/feedbackpilgrim): the self-hosted app that this SDK calls. It uses the AGPL-3.0.
+- [Feedback Pilgrim](https://github.com/amedina068/feedbackpilgrim): the app that this SDK calls. The self-hosted edition uses the AGPL-3.0. [Feedback Pilgrim Cloud](https://app.feedbackpilgrim.com) is the hosted edition.
 - [Documentation](https://feedbackpilgrim.com/docs): the guides for the app and the SDKs. The source is in [feedbackpilgrim-docs](https://github.com/amedina068/feedbackpilgrim-docs).
 - [SDK overview](https://feedbackpilgrim.com/docs/sdks/overview): the install steps and the features of each SDK.
 - SDKs for other languages: [TypeScript](https://github.com/amedina068/feedbackpilgrim-js), [Python](https://github.com/amedina068/feedbackpilgrim-python), [Ruby](https://github.com/amedina068/feedbackpilgrim-ruby).
