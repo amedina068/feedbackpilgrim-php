@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a fault in the SDK.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report a security problem here. Read SECURITY.md.
+        Do not paste a token, an identity secret or a webhook secret.
+  - type: textarea
+    id: what-occurred
+    attributes:
+      label: What occurred
+      description: Write what the SDK did.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: Write what the SDK must do.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Give the steps and the smallest code that shows the fault.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+
+        ```php
+        // The smallest code that shows the fault.
+        ```
+    validations:
+      required: true
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.3"
+    validations:
+      required: true
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel version
+      description: Fill in this field if you use Laravel.
+      placeholder: "12.0"
+  - type: input
+    id: http-client
+    attributes:
+      label: HTTP client
+      placeholder: Guzzle 7.9
+  - type: textarea
+    id: error-body
+    attributes:
+      label: Error body
+      description: If the exception is an `ApiException`, write the output of `$exception->status` and `$exception->body()`. Remove each personal value first.
+      render: text
