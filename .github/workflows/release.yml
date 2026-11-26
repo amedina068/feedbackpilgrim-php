@@ -1,12 +1,14 @@
-# Prepares a release. This workflow runs only by hand.
+# Releases the package. This workflow runs only by hand.
 #
 # It does the checks, then creates a git tag and a GitHub release.
-# It does not publish the package to Packagist.
+# Packagist reads the new tag through its GitHub integration. The
+# repository has no Packagist secret, and this workflow does not call
+# Packagist.
 #
-# To publish to Packagist later:
-#   1. Add the repository to Packagist.
-#   2. Add the Packagist API token as the repository secret PACKAGIST_TOKEN.
-#   3. Remove the comment marks of the "Notify Packagist" step below.
+# Before the first release, submit the repository on Packagist one time:
+# https://packagist.org/packages/submit with the URL
+# https://github.com/amedina068/feedbackpilgrim-php. After that, the Packagist
+# GitHub hook updates the package for each new tag.
 
 name: Release
 
@@ -59,11 +61,3 @@ jobs:
             --title "v${{ inputs.version }}" \
             --notes "Read CHANGELOG.md for the changes in this version." \
             --target "${{ github.sha }}"
-
-      # - name: Notify Packagist
-      #   env:
-      #     PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
-      #   run: |
-      #     curl --fail -X POST -H 'Content-Type: application/json' \
-      #       "https://packagist.org/api/update-package?username=amedina068&apiToken=${PACKAGIST_TOKEN}" \
-      #       -d '{"repository":{"url":"https://github.com/amedina068/feedbackpilgrim-php"}}'
